@@ -1,0 +1,204 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Create VPC and Network Settings.
+
+Parameters:
+  ProjectDescription:
+    Description: Name of VPC Description.
+    Type: String
+    Default: AWS Glue Study
+  PublicSubnet1Description:
+    Description: Name of Public Subnet1 Description.
+    Type: String
+    Default: Public Subnet1 for AWS Glue Study
+  PublicSubnet2Description:
+    Description: Name of Public Subnet2 Description.
+    Type: String
+    Default: Public Subnet2 for AWS Glue Study
+  PublicRouteTableName:
+    Description: Name of Public Route Table Name.
+    Type: String
+    Default: Public Route Table for AWS Glue Study
+  CIDRVpc:
+    Description: CIDR Information of VPC.
+    Type: String
+    Default: 10.0.0.0/16
+  CIDRPublicSubnet1:
+    Description: CIDR Information of Public Subnet 1.
+    Type: String
+    Default: 10.0.0.0/24
+  CIDRPublicSubnet2:
+    Description: CIDR Information of Public Subnet 2.
+    Type: String
+    Default: 10.0.1.0/24
+
+Mappings:
+  AZ:
+    us-east-1:
+      primary: us-east-1a
+      secondary: us-east-1c
+    us-west-2:
+      primary: us-west-2a
+      secondary: us-west-2b
+    us-west-1:
+      primary: us-west-1a
+      secondary: us-west-1b
+    eu-west-1:
+      primary: eu-west-1a
+      secondary: eu-west-1b
+    ap-southeast-1:
+      primary: ap-southeast-1a
+      secondary: ap-southeast-1b
+    ap-southeast-2:
+      primary: ap-southeast-2a
+      secondary: ap-southeast-2b
+    ap-northeast-1:
+      primary: ap-northeast-1a
+      secondary: ap-northeast-1c
+    sa-east-1:
+      primary: sa-east-1a
+      secondary: sa-east-1b
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      CidrBlock:
+        Ref: CIDRVpc
+      InstanceTenancy: default
+      Tags:
+      - Key: Application
+        Value:
+          Ref: AWS::StackId
+      - Key: Network
+        Value: Public
+      - Key: Name
+        Value:
+          Ref: ProjectDescription
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Application
+        Value:
+          Ref: AWS::StackId
+      - Key: Network
+        Value: Public
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VPC
+      InternetGatewayId:
+        Ref: InternetGateway
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn: AttachGateway
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Application
+        Value:
+          Ref: AWS::StackId
+      - Key: Network
+        Value: Public
+      - Key: Name
+        Value:
+          Ref: PublicRouteTableName
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: InternetGateway
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn: AttachGateway
+    Properties:
+      VpcId:
+        Ref: VPC
+      AvailabilityZone:
+        Fn::FindInMap:
+        - AZ
+        - Ref: AWS::Region
+        - primary
+      CidrBlock:
+        Ref: CIDRPublicSubnet1
+      Tags:
+      - Key: Application
+        Value:
+          Ref: AWS::StackId
+      - Key: Network
+        Value: Public
+      - Key: Name
+        Value:
+          Ref: PublicSubnet1Description
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    DependsOn: AttachGateway
+    Properties:
+      VpcId:
+        Ref: VPC
+      AvailabilityZone:
+        Fn::FindInMap:
+        - AZ
+        - Ref: AWS::Region
+        - secondary
+      CidrBlock:
+        Ref: CIDRPublicSubnet2
+      Tags:
+      - Key: Application
+        Value:
+          Ref: AWS::StackId
+      - Key: Network
+        Value: Public
+      - Key: Name
+        Value:
+          Ref: PublicSubnet2Description
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet1
+      RouteTableId:
+        Ref: PublicRouteTable
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet2
+      RouteTableId:
+        Ref: PublicRouteTable
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action:
+              - "*"
+            Resource:
+              - "*"
+      RouteTableIds:
+        - Ref: PublicRouteTable
+      ServiceName: !Join 
+        - ''
+        - - com.amazonaws.
+          - !Ref 'AWS::Region'
+          - .s3
+      VpcId:
+        Ref: VPC
+
+Outputs:
+  VpcId:
+    Description: VPC ID
+    Value:
+      Ref: VPC
+

@@ -1,0 +1,77 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Main Template For AWS Glue Study
+
+Parameters:
+  ProjectDescription:
+    Description: Name of VPC Description.
+    Type: String
+    Default: AWS Glue Study
+  PublicSubnet1Description:
+    Description: Name of Public Subnet1 Description.
+    Type: String
+    Default: Public Subnet1 for AWS Glue Study
+  PublicSubnet2Description:
+    Description: Name of Public Subnet2 Description.
+    Type: String
+    Default: Public Subnet2 for AWS Glue Study
+  PublicRouteTableName:
+    Description: Name of Public Route Table Name.
+    Type: String
+    Default: Public Route Table for AWS Glue Study
+  CIDRVpc:
+    Description: CIDR Information of VPC.
+    Type: String
+    Default: 10.0.0.0/16
+  CIDRPublicSubnet1:
+    Description: CIDR Information of Public Subnet 1.
+    Type: String
+    Default: 10.0.0.0/24
+  CIDRPublicSubnet2:
+    Description: CIDR Information of Public Subnet 2.
+    Type: String
+    Default: 10.0.1.0/24
+  UserName:
+    Description: IAM User Name
+    Type: String
+  UserPassword:
+    Description: IAM User Password
+    Type: String
+    NoEcho: true
+
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/aws-glue-study/vpc.yaml
+      Parameters: 
+        ProjectDescription:
+          Ref: ProjectDescription
+        PublicSubnet1Description:
+          Ref: PublicSubnet1Description
+        PublicSubnet2Description:
+          Ref: PublicSubnet2Description
+        PublicRouteTableName:
+          Ref: PublicRouteTableName
+        CIDRVpc:
+          Ref: CIDRVpc
+        CIDRPublicSubnet1:
+          Ref: CIDRPublicSubnet1
+        CIDRPublicSubnet2:
+          Ref: CIDRPublicSubnet2
+  IAMStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/aws-glue-study/iam.yaml
+      Parameters:
+        UserName:
+          Ref: UserName
+        UserPassword:
+          Ref: UserPassword
+  SecurityGroupStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/aws-glue-study/sg.yaml
+      Parameters:
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+

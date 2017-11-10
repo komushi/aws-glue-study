@@ -1,0 +1,46 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Create Security Group Settings.
+
+Parameters:
+  VpcId:
+    Description: ID of VPC
+    Type: AWS::EC2::VPC::Id
+
+Resources:
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      VpcId:
+        Ref: VpcId  
+      GroupDescription: Database Security Group for AWS Glue Study
+      Tags: 
+        - Key: Name
+          Value: AWSGlueStudyDatabaseSecurityGroup
+  DatabaseSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      GroupId:
+        Ref: DatabaseSecurityGroup
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
+      SourceSecurityGroupId:
+        Ref: DatabaseSecurityGroup
+  DatabaseSecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties: 
+      GroupId:
+        Ref: DatabaseSecurityGroup
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
+      DestinationSecurityGroupId:
+        Ref: DatabaseSecurityGroup
+  PublicSecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties: 
+      GroupId:
+        Ref: DatabaseSecurityGroup
+      IpProtocol: -1
+      CidrIp: 0.0.0.0/0

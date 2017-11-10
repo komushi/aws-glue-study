@@ -1,0 +1,74 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: IAM Stack
+
+Parameters:
+  UserName:
+    Description: IAM User Name
+    Type: String
+  UserPassword:
+    Description: IAM User Password
+    Type: String
+    NoEcho: true
+Resources:
+  AWSGlueServiceRoleWithS3:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: glue.amazonaws.com
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+
+  AWSGlueServiceNotebookRoleWithS3:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: ec2.amazonaws.com
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSGlueServiceNotebookRole"
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+
+  AWSGlueUserWithAthena:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: 
+        Ref: UserName
+      LoginProfile: 
+          Password: 
+            Ref: UserPassword
+          PasswordResetRequired: true
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AWSGlueConsoleFullAccess"
+        - "arn:aws:iam::aws:policy/CloudWatchLogsReadOnlyAccess"
+        - "arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess"
+        - "arn:aws:iam::aws:policy/AmazonAthenaFullAccess"
+
+  AWSGlueUserKeys:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName:
+        Ref: AWSGlueUserWithAthena
+
+Outputs:
+  AccessKey:
+    Description: Access Key ID of Glue User
+    Value:
+      Ref: AWSGlueUserKeys
+
+  SecretKey:
+    Description: Secret Key of Glue User
+    Value:
+      Fn::GetAtt:
+        - AWSGlueUserKeys
+        - SecretAccessKey
