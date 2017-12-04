@@ -3,10 +3,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Main Template For AWS Glue Study
 
 Parameters:
-  ProjectDescription:
-    Description: Name of VPC Description.
-    Type: String
-    Default: AWS Glue Study
+  # ProjectDescription:
+  #   Description: Name of VPC Description.
+  #   Type: String
+  #   Default: AWS Glue Study
   PublicSubnet1Description:
     Description: Name of Public Subnet1 Description.
     Type: String
@@ -45,8 +45,8 @@ Resources:
     Properties:
       TemplateURL: https://cfn-template-group.s3.amazonaws.com/aws-glue-study/vpc.yaml
       Parameters: 
-        ProjectDescription:
-          Ref: ProjectDescription
+        StackName:
+          Ref: AWS::StackName
         PublicSubnet1Description:
           Ref: PublicSubnet1Description
         PublicSubnet2Description:
@@ -64,6 +64,7 @@ Resources:
     Properties:
       TemplateURL: https://cfn-template-group.s3.amazonaws.com/aws-glue-study/iam.yaml
       Parameters:
+
         UserName:
           Ref: UserName
         UserPassword:

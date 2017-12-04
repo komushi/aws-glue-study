@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Create Security Group Settings.
+Description: Stack to Create Security Group Settings.
 
 Parameters:
   VpcId:
@@ -8,7 +8,7 @@ Parameters:
     Type: AWS::EC2::VPC::Id
 
 Resources:
-  DatabaseSecurityGroup:
+  GlueSelfRerencingSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       VpcId:
@@ -16,31 +16,49 @@ Resources:
       GroupDescription: Database Security Group for AWS Glue Study
       Tags: 
         - Key: Name
-          Value: AWSGlueStudyDatabaseSecurityGroup
-  DatabaseSecurityGroupIngress:
+          Value: AWSGlueStudySelfRerencingSecurityGroup
+  SelfRerencingSecurityGroupIngress:
     Type: AWS::EC2::SecurityGroupIngress
     Properties: 
       GroupId:
-        Ref: DatabaseSecurityGroup
+        Ref: GlueSelfRerencingSecurityGroup
       IpProtocol: tcp
       FromPort: 0
       ToPort: 65535
       SourceSecurityGroupId:
-        Ref: DatabaseSecurityGroup
-  DatabaseSecurityGroupEgress:
+        Ref: GlueSelfRerencingSecurityGroup
+  SSHSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      GroupId:
+        Ref: GlueSelfRerencingSecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: 0.0.0.0/0
+  HttpsSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      GroupId:
+        Ref: GlueSelfRerencingSecurityGroup
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      CidrIp: 0.0.0.0/0
+  SelfRerencingSecurityGroupEgress:
     Type: AWS::EC2::SecurityGroupEgress
     Properties: 
       GroupId:
-        Ref: DatabaseSecurityGroup
+        Ref: GlueSelfRerencingSecurityGroup
       IpProtocol: tcp
       FromPort: 0
       ToPort: 65535
       DestinationSecurityGroupId:
-        Ref: DatabaseSecurityGroup
+        Ref: GlueSelfRerencingSecurityGroup
   PublicSecurityGroupEgress:
     Type: AWS::EC2::SecurityGroupEgress
     Properties: 
       GroupId:
-        Ref: DatabaseSecurityGroup
+        Ref: GlueSelfRerencingSecurityGroup
       IpProtocol: -1
       CidrIp: 0.0.0.0/0
