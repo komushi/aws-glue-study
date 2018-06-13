@@ -210,3 +210,37 @@ aws-glue-study-IAMStack-MBEUULS-AWSGlueServiceRole-D38ZRN3RZCZX
 ```
 select count(1) from flight_parquet
 ```
+
+# 5. Setup managed Zeppelin notebook envrironment
+
+## 5-0. Check the existing development endpoint which was created during Cfn deployment
+* Service -> AWS Glue -> Dev endpoints -> myDevEndpoint
+
+## 5-1. Rotate SSH key and download new private key
+* Dev endpoints -> Action -> Rotate SSH Key
+* Download a private key to your local computer as "private-key.pem"
+
+## 5-2. Create Zeppelin notebook server
+* Dev endpoints -> Action -> Create notebook server
+* Input notebook parameters as below:
+```
+  CloudFormation stack name: aws-glue-[your-name-and-date]
+  IAM Role: choose the one which name includes "AWSGlueNotebookRule"
+  EC2 key pair: use any of existing or just create a new one
+  SSH private key: press Upload button to choose the private-key.pem
+  Notebook username: admin
+  Notebook password: type as you want
+```
+* Leave all other parameters as default and press Finish
+* Service -> CloudFormation -> Stack
+* Check if the Zeppelin notebook server is being created, and wait until finished (it may takes a few minutes)
+
+## Connect to the Zeppelin
+* Service -> AWS Glue -> Dev endpoints -> myDevEndpoint
+* Check if your new instance is now listed under Notebook servers pane
+* Click Notebook Server URL to connect to Zeppelin notebook server via Web browser
+
+# 6. Develop custom ETL script using Zeppelin notebook
+
+## 5-0. TBD
+* TBD
