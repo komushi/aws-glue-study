@@ -223,6 +223,7 @@ select count(1) from flight_parquet
 ## 5-2. Create Zeppelin notebook server
 * Dev endpoints -> Action -> Create notebook server
 * Input notebook parameters as below:
+
 ```
   CloudFormation stack name: aws-glue-[your-name-and-date]
   IAM Role: choose the one which name includes "AWSGlueNotebookRule"
@@ -242,5 +243,74 @@ select count(1) from flight_parquet
 
 # 6. Develop custom ETL script using Zeppelin notebook
 
-## 5-0. TBD
-* TBD
+## 6-0. Login to Zeppelin notebook
+* Wait until notebook EC2 instance is ready (Can be checked under EC2 instances)
+* Open the link at the bottom of "myDevEndpoint" detail page
+* "Your connection is not secure" may be displayed with Firefox browser
+
+```
+Advanced -> Add Exception... -> Confirm Secure Exception
+```
+* Login (Top right corner of page) -> input username / password set in #5-2 -> Logged in -> Create new note
+
+## 6-1. Extract data and quick explore
+* Execute code below
+
+```
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from pyspark.sql.functions import count, when, expr, col, sum, isnull
+from pyspark.sql.functions import countDistinct
+from awsglue.dynamicframe import DynamicFrame
+
+glueContext = GlueContext(spark.sparkContext)
+
+job = Job(glueContext)
+job.init("delay_analytics_job")
+
+## Read from data source created in #3-2
+datasource0 = glueContext.create_dynamic_frame.from_catalog(database = "flight_data", table_name = "private_data", transformation_ctx = "datasource0")
+datasource0.printSchema()
+
+## For large data sets, try to cache the data will accelerate later execution.
+df.cache()
+
+## Convert to standard Spark DataFrame to do trasformation to be continued
+df = datasource0.toDF()
+
+## Over view of flight dates and destinations
+df.select(countDistinct("fl_date"), countDistinct("dest")).show()
+```
+## 6-2. Transform to get insight of delay statics
+* In order to analyse the arrived delay statics in all days of airports, let us try to aggregate the all the airport on each day, by counting the aireplanes arrived ahead of time, ontime or delayed
+
+```
+## Count on condition
+cnt_cond = lambda cond: sum(when(cond, 1).otherwise(0))
+
+## Aggregate flight delay statics
+stat_df = df.groupBy("fl_date", "dest").agg(count("fl_date").alias("num_arrive"), cnt_cond(col("arr_delay") < 0).alias("ahead_of_time"), (cnt_cond(col("arr_delay") < 0)*100/count("fl_date")).alias("ahead_of_time_percent"), cnt_cond(col("arr_delay") == 0).alias("ontime"), (cnt_cond(col("arr_delay") == 0)*100/count("fl_date")).alias("ontime_percent"), cnt_cond(col("arr_delay") > 0).alias("delayed"), (cnt_cond(col("arr_delay") > 0)*100/count("fl_date")).alias("delayed_percent"), cnt_cond(isnull(col("arr_delay"))).alias("no_value"), (cnt_cond(isnull(col("arr_delay")))*100/count("fl_date")).alias("no_value_percent")).orderBy('fl_date', ascending=True)
+
+## To see all airports on one day, a little large set should be exported accorting to #6-1
+stat_df.show(400)
+```
+## 6-3. Export transformed data to data sinks in kinds of formats for Loading to data consumers.
+* Service -> S3 -> "fight2016csv" -> Add folder -> "results"
+* Convert DataFrame back to DynamicFrame for exporting transformed data to data sink, such as S3 bucket.
+
+```
+stat_dyf = DynamicFrame.fromDF(stat_df, glueContext, "stat_dyf")
+## Case 1: Write to CSV
+## datasink1 = glueContext.write_dynamic_frame.from_options(frame = stat_dyf, connection_type = "s3", connection_options = {"path": "s3://fight2016csv/results/", "compression": "gzip"}, format = "csv", transformation_ctx = "datasink1")
+## Case 2: Write to parquet
+#datasink2 = glueContext.write_dynamic_frame.from_options(frame = stat_dyf, connection_type = "s3", connection_options = {"path": "s3://fight2016csv/results/"}, format = "parquet", transformation_ctx = "datasink2")
+## Case 3: Write to orc
+datasink3 = glueContext.write_dynamic_frame.from_options(frame = stat_dyf, connection_type = "s3", connection_options = {"path": "s3://fight2016csv/results/"}, format = "orc", transformation_ctx = "datasink3")
+job.commit()
+```
+* Go to S3 to check under results folder, files should be here.
+* The transformed data can be loaded to kinds of data consumers like QuickSight, Athena, etc.
