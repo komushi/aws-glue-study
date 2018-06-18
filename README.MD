@@ -276,11 +276,11 @@ job.init("delay_analytics_job")
 datasource0 = glueContext.create_dynamic_frame.from_catalog(database = "flight_data", table_name = "private_data", transformation_ctx = "datasource0")
 datasource0.printSchema()
 
-## For large data sets, try to cache the data will accelerate later execution.
-df.cache()
-
 ## Convert to standard Spark DataFrame to do trasformation to be continued
 df = datasource0.toDF()
+
+## For large data sets, try to cache the data will accelerate later execution.
+df.cache()
 
 ## Over view of flight dates and destinations
 df.select(countDistinct("fl_date"), countDistinct("dest")).show()
