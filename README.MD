@@ -236,11 +236,6 @@ select count(1) from flight_parquet
 ## 5-2. Connect to the Zeppelin
 * Service -> AWS Glue -> Dev endpoints -> myDevEndpoint
 * Check if your new instance is now listed under Notebook servers pane
-* Click Notebook Server URL to connect to Zeppelin notebook server via Web browser
-```
-  User: admin
-  Password: password which you used
-```
 
 # 6. Develop custom ETL script using Zeppelin notebook
 ## 6-0. Login to Zeppelin notebook
