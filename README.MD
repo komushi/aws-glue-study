@@ -287,8 +287,9 @@ df.select(countDistinct("fl_date"), countDistinct("dest")).show()
 ```
 ![Input and run code](./snapshots/run_code_1.png "Input and run code")
 ![Check result](./snapshots/run_code_2.png "Check result")
+
 ## 6-2. Transform to get insight of delay statics
-* In order to analyse the arrived delay statics in all days of airports, let us try to aggregate the all the airport on each day, by counting the aireplanes arrived ahead of time, ontime or delayed
+* In order to analyse the arrived delay statics in all days of airports, let us try to aggregate the all the airport on each day, by counting the airplanes arrived ahead of time, ontime or delayed
 
 ```
 ## Count on condition
@@ -301,24 +302,27 @@ stat_df = df.groupBy("fl_date", "dest").agg(count("fl_date").alias("num_arrive")
 stat_df.show(400)
 ```
 ![Check result](./snapshots/run_code_3.png "Check result")
+
 ## 6-3. Export transformed data to data sinks in kinds of formats for Loading to data consumers.
-* Service -> S3 -> "fight2016csv" -> Add folder -> "results"
+* Service -> S3 -> <your_workshop_bucket> -> Add folder -> "results"
 * Convert DataFrame back to DynamicFrame for exporting transformed data to data sink, such as S3 bucket.
 * Try to change the format to the one you want to export
 ```
 stat_dyf = DynamicFrame.fromDF(stat_df, glueContext, "stat_dyf")
 ## Case 1: Write to CSV
-## datasink1 = glueContext.write_dynamic_frame.from_options(frame = stat_dyf, connection_type = "s3", connection_options = {"path": "s3://fight2016csv/results/", "compression": "gzip"}, format = "csv", transformation_ctx = "datasink1")
+datasink1 = glueContext.write_dynamic_frame.from_options(frame = stat_dyf, connection_type = "s3", connection_options = {"path": "s3://<your_workshop_bucket>/results/", "compression": "gzip"}, format = "csv", transformation_ctx = "datasink1")
 ## Case 2: Write to parquet
-#datasink2 = glueContext.write_dynamic_frame.from_options(frame = stat_dyf, connection_type = "s3", connection_options = {"path": "s3://fight2016csv/results/"}, format = "parquet", transformation_ctx = "datasink2")
+datasink2 = glueContext.write_dynamic_frame.from_options(frame = stat_dyf, connection_type = "s3", connection_options = {"path": "s3://<your_workshop_bucket>/results/"}, format = "parquet", transformation_ctx = "datasink2")
 ## Case 3: Write to orc
-datasink3 = glueContext.write_dynamic_frame.from_options(frame = stat_dyf, connection_type = "s3", connection_options = {"path": "s3://fight2016csv/results/"}, format = "orc", transformation_ctx = "datasink3")
+datasink3 = glueContext.write_dynamic_frame.from_options(frame = stat_dyf, connection_type = "s3", connection_options = {"path": "s3://<your_workshop_bucket>/results/"}, format = "orc", transformation_ctx = "datasink3")
 job.commit()
 ```
 * Go to S3 to check under results folder, files should be here.
 * The transformed data can be loaded to kinds of data consumers like QuickSight, Athena, etc.
 
 # 7. Create a Glue job to do the ETL job automatically
+* What is the purpose of this section?
+
 * Service -> AWS Glue -> Jobs -> Add job
 * Name: job_delay_stat_etl
 * IAM Role: AWSGlueServiceRole created by CloudFormation:
