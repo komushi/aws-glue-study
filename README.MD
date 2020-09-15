@@ -1,12 +1,10 @@
 # AWS Glue Hands-On
 
+**This hands-on guide has been used by IoT, Manufacture, Telecom customers to give a better view how they could easily use the imported data with Glue by using this managed ETL service with spark.**
+
+**The used data is published by AWS officially.**
+
 # 1. Prepare the environment
-
-## 1-0. Fetch the hands-on contents
-```
-git clone git@github.com:komushi/aws-glue-study.git
-```
-
 ## 1-1. Create the S3 bucket <your_workshop_bucket>
 **Use the AWS management console or AWS CLI**
 
